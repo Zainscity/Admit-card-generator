@@ -88,7 +88,7 @@ if st.button("🛠️ Generate Admit Card"):
     if all([admit_no, test_password, name, father_name, program, test_time, block, test_centre, passport_photo]):
         card = generate_card()
 
-        st.image(card, caption="Admit Card Preview", use_column_width=True)
+        st.image(card, caption="Admit Card Preview", use_container_width=True)
 
         buf = io.BytesIO()
         card.save(buf, format="PNG")
