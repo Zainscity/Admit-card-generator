@@ -1,127 +1,115 @@
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-import datetime
 import io
+from datetime import datetime
 
+# Title and Page Settings
 st.set_page_config(page_title="Admit Card Generator", layout="centered")
 
-# Title
-st.title("🎓 Admit Card Generator")
-
-# User Input
-st.subheader("Fill out the form below to generate your Admit Card")
-
-name = st.text_input("Full Name")
-father_name = st.text_input("Father's Name")
-admit_card_no = st.number_input("Admit Card No.", min_value=0, format="%d")
-test_password = st.text_input("Test Password", value="AirUniversity12!")
-program = st.text_input("Programme", value="Bachelor of Science in Computer Sciences")
-block = st.text_input("Block", value="IAA-UG")
-
-# Predefined classes
-classes = ["9th", "10th", "11th", "12th"]
-selected_class = st.selectbox("Class", classes)
-
-# Date and Time pickers
-test_date = st.date_input("Test Date", value=datetime.date.today())
-test_time = st.time_input("Test Time", value=datetime.time(hour=14, minute=0))
-
-# Upload picture
-image_file = st.file_uploader("Upload Passport Size Image", type=["jpg", "jpeg", "png"])
-
+st.markdown("<h1 style='text-align: center;'>Admit Card Generator</h1>", unsafe_allow_html=True)
 st.markdown("---")
 
-# Generate Card Function
-def generate_admit_card():
-    # Create base image
-    card = Image.new("RGB", (1000, 700), "white")
-    draw = ImageDraw.Draw(card)
+# Form
+with st.form("admit_form", clear_on_submit=False):
+    col1, col2 = st.columns([3, 1])
 
-    # Fonts
-    font_path = "arial.ttf"  # Adjust if deploying
-    try:
-        font_bold = ImageFont.truetype(font_path, 26)
-        font_regular = ImageFont.truetype(font_path, 22)
-        font_header = ImageFont.truetype(font_path, 30)
-        font_center = ImageFont.truetype(font_path, 28)
-    except:
-        font_bold = ImageFont.load_default()
-        font_regular = ImageFont.load_default()
-        font_header = ImageFont.load_default()
-        font_center = ImageFont.load_default()
+    with col1:
+        name = st.text_input("Student Name")
+        father_name = st.text_input("Father's Name")
+        programme = st.text_input("Programme", placeholder="e.g. Bachelor of Science in Computer Sciences")
+        class_name = st.selectbox("Class", ["9th", "10th", "11th", "12th"])
+        block = st.text_input("Block")
+        admit_card_no = st.text_input("Admit Card No", help="Only numeric values allowed", max_chars=10)
+        test_password = st.text_input("Test Password")
+        test_date = st.date_input("Test Date")
+        test_time = st.time_input("Test Time")
 
-    # Header
-    draw.text((30, 30), "Reference No. 191337", font=font_regular, fill="black")
-    draw.text((420, 30), "ADMIT CARD", font=font_header, fill="black")
+    with col2:
+        uploaded_image = st.file_uploader("Upload Passport Size Photo", type=["jpg", "jpeg", "png"])
 
-    # Center line
-    center_text = "Admit Card For Admission Test"
-    bbox = draw.textbbox((0, 0), center_text, font=font_center)
-    text_width = bbox[2] - bbox[0]
-    x_center = (1000 - text_width) // 2
-    draw.text((x_center, 70), center_text, font=font_center, fill="black")
+    submitted = st.form_submit_button("Generate Admit Card")
 
-    # Main info
-    draw.text((30, 130), f"Admit Card No. {int(admit_card_no)}", font=font_regular, fill="black")
-    draw.text((500, 130), "Test Password: " + test_password, font=font_regular, fill="black")
+# Font paths (replace with your own if required)
+font_bold = "arialbd.ttf"
+font_regular = "arial.ttf"
 
-    draw.text((30, 180), f"Name: ", font=font_regular, fill="black")
-    draw.text((160, 180), name, font=font_bold, fill="black")
-
-    draw.text((30, 220), f"Father's Name: ", font=font_regular, fill="black")
-    draw.text((250, 220), father_name, font=font_bold, fill="black")
-
-    draw.text((30, 260), f"Programme: ", font=font_regular, fill="black")
-    draw.text((250, 260), program, font=font_regular, fill="black")
-
-    draw.text((30, 300), f"Class: ", font=font_regular, fill="black")
-    draw.text((250, 300), selected_class, font=font_regular, fill="black")
-
-    # Right side: date/time/block
-    draw.text((600, 180), "Test Date", font=font_regular, fill="black")
-    draw.text((750, 180), test_date.strftime("%B %d, %Y - %A"), font=font_regular, fill="black")
-
-    draw.text((600, 220), "Test Timing", font=font_regular, fill="black")
-    draw.text((750, 220), test_time.strftime("%I:%M %p").lower(), font=font_regular, fill="black")
-
-    draw.text((600, 260), "Block", font=font_regular, fill="black")
-    draw.text((750, 260), block, font=font_regular, fill="black")
-
-    # Image on right
-    if image_file:
-        user_img = Image.open(image_file).resize((180, 220))
-        card.paste(user_img, (780, 320))
-
-    # Admission Test Center
-    draw.text((30, 370), "ADMISSION TEST CENTRE", font=font_bold, fill="black")
-    draw.text((30, 400), "Air University, Sector E-9, Islamabad.", font=font_regular, fill="black")
-
-    # Notes
-    draw.text((30, 460), "NOTE:", font=font_bold, fill="black")
-    notes = [
-        "• Please be seated half an hour before start of test.",
-        "• Please bring lead pencil, ballpoint pen, your Admit Card and CNIC / B Form on test day.",
-        "• Calculators, Mobile or any supporting electronic gadget are not allowed in the examination hall.",
-        "• No entry shall be allowed after start of the test.",
-        "• Parking inside the campus is not allowed. Please make pick and drop arrangements accordingly.",
-    ]
-    y = 490
-    for note in notes:
-        draw.text((40, y), note, font=font_regular, fill="black")
-        y += 30
-
-    return card
-
-# Button and Display
-if st.button("Generate Admit Card"):
-    if name and father_name and image_file:
-        card_img = generate_admit_card()
-        st.image(card_img, caption="Admit Card Preview", use_container_width=True)
-
-        # Download Button
-        img_byte_arr = io.BytesIO()
-        card_img.save(img_byte_arr, format='PNG')
-        st.download_button("📥 Download Admit Card", data=img_byte_arr.getvalue(),
-                           file_name="admit_card.png", mime="image/png")
+if submitted:
+    if not all([name, father_name, programme, block, admit_card_no, test_password]):
+        st.error("Please fill all fields.")
+    elif not admit_card_no.isdigit():
+        st.error("Admit Card No must be numeric only.")
+    elif not uploaded_image:
+        st.error("Please upload an image.")
     else:
-        st.error("Please fill in all fields and upload a picture.")
+        # Load base canvas
+        card_width, card_height = 1000, 600
+        card = Image.new("RGB", (card_width, card_height), "white")
+        draw = ImageDraw.Draw(card)
+
+        # Load fonts
+        try:
+            bold = ImageFont.truetype(font_bold, 20)
+            big_bold = ImageFont.truetype(font_bold, 28)
+            regular = ImageFont.truetype(font_regular, 18)
+            small = ImageFont.truetype(font_regular, 14)
+        except:
+            bold = big_bold = regular = small = ImageFont.load_default()
+
+        # Draw border
+        border_color = "#2784f2"
+        border_width = 8
+        draw.rectangle([0, 0, card_width - 1, card_height - 1], outline=border_color, width=border_width)
+
+        # Admit Card Heading
+        heading = "ADMIT CARD"
+        w, _ = draw.textbbox((0, 0), heading, font=big_bold)[2:]
+        draw.text(((card_width - w) // 2, 30), heading, font=big_bold, fill="black")
+
+        # Photo
+        user_img = Image.open(uploaded_image).resize((150, 180))
+        card.paste(user_img, (card_width - 200, 100))
+
+        # Static + dynamic text blocks
+        x_left = 50
+        y_start = 90
+        spacing = 40
+
+        draw.text((x_left, y_start), f"Admit Card No: {admit_card_no}", font=bold, fill="black")
+        draw.text((x_left, y_start + spacing), f"Test Password: {test_password}", font=regular, fill="black")
+
+        draw.text((x_left, y_start + spacing * 2), f"Name: {name}", font=regular, fill="black")
+        draw.text((x_left + 500, y_start + spacing * 2), f"Test Date: {test_date.strftime('%B %d, %Y')}", font=regular, fill="black")
+
+        draw.text((x_left, y_start + spacing * 3), f"Father's Name: {father_name}", font=regular, fill="black")
+        draw.text((x_left + 500, y_start + spacing * 3), f"Test Timing: {test_time.strftime('%I:%M %p')}", font=regular, fill="black")
+
+        draw.text((x_left, y_start + spacing * 4), f"Programme: {programme}", font=regular, fill="black")
+        draw.text((x_left + 500, y_start + spacing * 4), f"Block: {block}", font=regular, fill="black")
+
+        draw.text((x_left, y_start + spacing * 5), f"Class: {class_name}", font=regular, fill="black")
+
+        # Centre Info
+        y_centre = y_start + spacing * 7
+        draw.text((x_left, y_centre), "ADMISSION TEST CENTRE", font=bold, fill="black")
+        draw.text((x_left, y_centre + 25), "Air University, Sector E-9, Islamabad.", font=regular, fill="black")
+
+        # Notes
+        y_note = y_centre + 70
+        draw.text((x_left, y_note), "NOTE:", font=bold, fill="black")
+        notes = [
+            "➤ Please be seated half an hour before start of test.",
+            "➤ Bring pencil, pen, Admit Card, and CNIC / B Form.",
+            "➤ Electronic gadgets are not allowed.",
+            "➤ No entry after test start time.",
+            "➤ Parking is not allowed. Arrange drop-off accordingly.",
+        ]
+        for i, note in enumerate(notes):
+            draw.text((x_left + 10, y_note + 25 + i * 25), note, font=small, fill="black")
+
+        # Save to buffer
+        buf = io.BytesIO()
+        card.save(buf, format="PNG")
+        st.image(buf.getvalue(), caption="Generated Admit Card", use_container_width=True)
+
+        # Download
+        st.download_button("Download Admit Card", buf.getvalue(), file_name="admit_card.png", mime="image/png")
