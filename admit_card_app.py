@@ -40,14 +40,14 @@ with st.form("admit_form", clear_on_submit=False):
 
     with col1:
         name = st.text_input("Student Name")
-        father_name = st.text_input("Father's Name", "Father's Name")
-        programme = st.text_input("Programme", "Bachelor Of Science In Computer Sciences")
+        father_name = st.text_input("Father's Name")
+        programme = st.text_input("Programme")
         class_name = st.selectbox("Class (Not used in this design)", ["9th", "10th", "11th", "12th"])
         cnic = st.text_input("CNIC / B.Form No (Not used)", help="Numeric only", max_chars=15)
         
     with col2:
-        admit_card_no = st.text_input("Admit Card No", "*******", help="Numeric only", max_chars=10)
-        test_password = st.text_input("Test Password", "Password")
+        admit_card_no = st.text_input("Admit Card No",  help="Numeric only", max_chars=10)
+        test_password = st.text_input("Test Password")
         test_date = st.date_input("Test Date", datetime(2024, 7, 22))
         test_time = st.time_input("Test Time", datetime.strptime("02:00 PM", "%I:%M %p").time())
         phone = st.text_input("Phone No. (Not used)", help="Numeric only", max_chars=15)
