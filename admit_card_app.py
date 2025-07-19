@@ -1,146 +1,127 @@
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-import io
-from datetime import date
 import datetime
+import io
 
-# --- Streamlit App Setup ---
 st.set_page_config(page_title="Admit Card Generator", layout="centered")
 
-st.markdown("""
-    <style>
-        .stButton>button {
-            background-color: #4A90E2;
-            color: white;
-            font-weight: bold;
-            border-radius: 10px;
-            padding: 0.5rem 1rem;
-        }
-        .stDownloadButton>button {
-            background-color: #2ECC71;
-            color: white;
-            font-weight: bold;
-            border-radius: 10px;
-            padding: 0.5rem 1rem;
-        }
-        .stTextInput>div>input, .stSelectbox>div, .stDateInput>div>input, .stTimeInput>div>input {
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# Title
+st.title("🎓 Admit Card Generator")
 
-st.markdown("<h1 style='text-align: center; color: #4A90E2;'>📄 Admit Card Generator</h1>", unsafe_allow_html=True)
+# User Input
+st.subheader("Fill out the form below to generate your Admit Card")
+
+name = st.text_input("Full Name")
+father_name = st.text_input("Father's Name")
+admit_card_no = st.number_input("Admit Card No.", min_value=0, format="%d")
+test_password = st.text_input("Test Password", value="AirUniversity12!")
+program = st.text_input("Programme", value="Bachelor of Science in Computer Sciences")
+block = st.text_input("Block", value="IAA-UG")
+
+# Predefined classes
+classes = ["9th", "10th", "11th", "12th"]
+selected_class = st.selectbox("Class", classes)
+
+# Date and Time pickers
+test_date = st.date_input("Test Date", value=datetime.date.today())
+test_time = st.time_input("Test Time", value=datetime.time(hour=14, minute=0))
+
+# Upload picture
+image_file = st.file_uploader("Upload Passport Size Image", type=["jpg", "jpeg", "png"])
+
 st.markdown("---")
 
-# --- Input Fields Layout ---
-with st.container():
-    col1, col2 = st.columns(2)
-    with col1:
-        admit_no = st.number_input("🎫 Admit Card No.", min_value=0, step=1, format="%d")
-        name = st.text_input("👤 Name")
-        father_name = st.text_input("👨‍👧 Father's Name")
-        program = st.selectbox("📘 Programme", ['Science', 'Commerce'])
-
-    with col2:
-        test_password = st.text_input("🔐 Test Password")
-        test_class = st.selectbox("🏫 Class", ['9th', '10th', '11th', '12th'])
-        test_date = st.date_input("🗓️ Test Date", value=date.today())
-        test_time = st.time_input("⏰ Test Time", value=datetime.time(14, 0))
-
-    block = st.text_input("🏢 Block (e.g., IAA-UG)")
-    test_centre = st.text_input("📍 Test Centre", value="Air University, Sector E-9, Islamabad.")
-    passport_photo = st.file_uploader("🖼️ Upload Passport Size Photo", type=['jpg', 'jpeg', 'png'])
-
-# --- Card Generator ---
-def generate_card():
-    card = Image.new("RGB", (1000, 600), "white")
+# Generate Card Function
+def generate_admit_card():
+    # Create base image
+    card = Image.new("RGB", (1000, 700), "white")
     draw = ImageDraw.Draw(card)
 
     # Fonts
+    font_path = "arial.ttf"  # Adjust if deploying
     try:
-        font_bold = ImageFont.truetype("arialbd.ttf", 24)
-        font = ImageFont.truetype("arial.ttf", 22)
-        font_small = ImageFont.truetype("arial.ttf", 18)
+        font_bold = ImageFont.truetype(font_path, 26)
+        font_regular = ImageFont.truetype(font_path, 22)
+        font_header = ImageFont.truetype(font_path, 30)
+        font_center = ImageFont.truetype(font_path, 28)
     except:
-        font_bold = font = font_small = ImageFont.load_default()
+        font_bold = ImageFont.load_default()
+        font_regular = ImageFont.load_default()
+        font_header = ImageFont.load_default()
+        font_center = ImageFont.load_default()
 
     # Header
-    draw.rectangle([10, 10, 990, 590], outline="#4A90E2", width=3)
-    draw.text((400, 30), "ADMIT CARD", font=font_bold, fill="#000000")
+    draw.text((30, 30), "Reference No. 191337", font=font_regular, fill="black")
+    draw.text((420, 30), "ADMIT CARD", font=font_header, fill="black")
 
-    draw.text((40, 80), f"Admit Card No: {admit_no}", font=font, fill="black")
-
-    # Centered line
+    # Center line
     center_text = "Admit Card For Admission Test"
-    bbox = draw.textbbox((0, 0), center_text, font=font)
+    bbox = draw.textbbox((0, 0), center_text, font=font_center)
     text_width = bbox[2] - bbox[0]
-    center_x = (1000 - text_width) // 2
-    draw.text((center_x, 120), center_text, font=font, fill="black")
+    x_center = (1000 - text_width) // 2
+    draw.text((x_center, 70), center_text, font=font_center, fill="black")
 
-    draw.text((40, 160), f"Test Password: {test_password}", font=font, fill="black")
+    # Main info
+    draw.text((30, 130), f"Admit Card No. {int(admit_card_no)}", font=font_regular, fill="black")
+    draw.text((500, 130), "Test Password: " + test_password, font=font_regular, fill="black")
 
-    # Personal Info
-    draw.text((40, 200), f"Name: {name}", font=font_bold, fill="black")
-    draw.text((500, 200), f"Test Date: {test_date.strftime('%B %d, %Y')}", font=font, fill="black")
-    draw.text((40, 240), f"Father's Name: {father_name}", font=font_bold, fill="black")
-    draw.text((500, 240), f"Test Timing: {test_time.strftime('%I:%M %p')}", font=font, fill="black")
-    draw.text((40, 280), f"Programme: {program}", font=font, fill="black")
-    draw.text((500, 280), f"Block: {block}", font=font, fill="black")
-    draw.text((40, 320), f"Class: {test_class}", font=font, fill="black")
+    draw.text((30, 180), f"Name: ", font=font_regular, fill="black")
+    draw.text((160, 180), name, font=font_bold, fill="black")
 
-    # Test Centre
-    draw.text((40, 370), "ADMISSION TEST CENTRE", font=font_bold, fill="#000000")
-    draw.text((40, 400), test_centre, font=font, fill="black")
+    draw.text((30, 220), f"Father's Name: ", font=font_regular, fill="black")
+    draw.text((250, 220), father_name, font=font_bold, fill="black")
+
+    draw.text((30, 260), f"Programme: ", font=font_regular, fill="black")
+    draw.text((250, 260), program, font=font_regular, fill="black")
+
+    draw.text((30, 300), f"Class: ", font=font_regular, fill="black")
+    draw.text((250, 300), selected_class, font=font_regular, fill="black")
+
+    # Right side: date/time/block
+    draw.text((600, 180), "Test Date", font=font_regular, fill="black")
+    draw.text((750, 180), test_date.strftime("%B %d, %Y - %A"), font=font_regular, fill="black")
+
+    draw.text((600, 220), "Test Timing", font=font_regular, fill="black")
+    draw.text((750, 220), test_time.strftime("%I:%M %p").lower(), font=font_regular, fill="black")
+
+    draw.text((600, 260), "Block", font=font_regular, fill="black")
+    draw.text((750, 260), block, font=font_regular, fill="black")
+
+    # Image on right
+    if image_file:
+        user_img = Image.open(image_file).resize((180, 220))
+        card.paste(user_img, (780, 320))
+
+    # Admission Test Center
+    draw.text((30, 370), "ADMISSION TEST CENTRE", font=font_bold, fill="black")
+    draw.text((30, 400), "Air University, Sector E-9, Islamabad.", font=font_regular, fill="black")
 
     # Notes
-    draw.text((40, 440), "NOTE:", font=font_bold, fill="#000000")
+    draw.text((30, 460), "NOTE:", font=font_bold, fill="black")
     notes = [
-        "Please be seated half an hour before start of test.",
-        "Bring pencil, pen, Admit Card, and CNIC / B Form.",
-        "Electronic gadgets are not allowed.",
-        "No entry after test start time.",
-        "Parking is not allowed. Arrange drop-off accordingly."
+        "• Please be seated half an hour before start of test.",
+        "• Please bring lead pencil, ballpoint pen, your Admit Card and CNIC / B Form on test day.",
+        "• Calculators, Mobile or any supporting electronic gadget are not allowed in the examination hall.",
+        "• No entry shall be allowed after start of the test.",
+        "• Parking inside the campus is not allowed. Please make pick and drop arrangements accordingly.",
     ]
-    y = 470
+    y = 490
     for note in notes:
-        draw.text((60, y), f"• {note}", font=font_small, fill="black")
-        y += 25
-
-    # Passport Photo
-    if passport_photo:
-        img = Image.open(passport_photo).resize((150, 180))
-        card.paste(img, (800, 120))
+        draw.text((40, y), note, font=font_regular, fill="black")
+        y += 30
 
     return card
 
-# --- Generate Button ---
-st.markdown("###")
-col_gen, col_blank, col_print = st.columns([1, 2, 1])
-with col_gen:
-    if st.button("🛠️ Generate Admit Card"):
-        if all([admit_no, test_password, name, father_name, program, test_time, block, test_centre, passport_photo]):
-            card = generate_card()
+# Button and Display
+if st.button("Generate Admit Card"):
+    if name and father_name and image_file:
+        card_img = generate_admit_card()
+        st.image(card_img, caption="Admit Card Preview", use_container_width=True)
 
-            st.image(card, caption="🖨️ Preview: Admit Card", use_container_width=True)
-
-            buf = io.BytesIO()
-            card.save(buf, format="PNG")
-            byte_im = buf.getvalue()
-
-            # Download Button
-            st.download_button("📥 Download Admit Card", data=byte_im, file_name="admit_card.png", mime="image/png")
-
-            # Print Button (opens print dialog)
-            st.components.v1.html(f"""
-            <script>
-            const image = new Image();
-            image.src = "data:image/png;base64,{byte_im.hex()}";
-            image.onload = () => {{
-                const w = window.open('');
-                w.document.write('<img src="' + image.src + '" onload="window.print(); window.close();" />');
-            }};
-            </script>
-            """, height=0)
-        else:
-            st.error("⚠️ Please fill in all the fields and upload a passport photo.")
+        # Download Button
+        img_byte_arr = io.BytesIO()
+        card_img.save(img_byte_arr, format='PNG')
+        st.download_button("📥 Download Admit Card", data=img_byte_arr.getvalue(),
+                           file_name="admit_card.png", mime="image/png")
+    else:
+        st.error("Please fill in all fields and upload a picture.")
