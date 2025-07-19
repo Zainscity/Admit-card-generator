@@ -73,7 +73,8 @@ def generate_card():
 
     # Centered line
     center_text = "Admit Card For Admission Test"
-    text_width, _ = draw.textsize(center_text, font=font)
+    bbox = draw.textbbox((0, 0), center_text, font=font)
+    text_width = bbox[2] - bbox[0]
     center_x = (1000 - text_width) // 2
     draw.text((center_x, 120), center_text, font=font, fill="black")
 
