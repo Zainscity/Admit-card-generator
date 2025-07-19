@@ -39,7 +39,7 @@ with st.form("admit_form", clear_on_submit=False):
     col1, col2 = st.columns(2)
 
     with col1:
-        name = st.text_input("Student Name", "Your Name")
+        name = st.text_input("Student Name")
         father_name = st.text_input("Father's Name", "Father's Name")
         programme = st.text_input("Programme", "Bachelor Of Science In Computer Sciences")
         class_name = st.selectbox("Class (Not used in this design)", ["9th", "10th", "11th", "12th"])
