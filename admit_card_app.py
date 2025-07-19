@@ -15,10 +15,10 @@ def load_font(filename, size):
     return ImageFont.truetype(path, size)
 
 # Load fonts
-font_regular = load_font("ARIAL.TTF", 24)
-font_bold = load_font("ARIALBD.TTF", 28)
-font_heading = load_font("ARIALBD.TTF", 36)
-font_small = load_font("ARIAL.TTF", 20)
+font_regular = load_font("arial.ttf", 24)
+font_bold = load_font("arialbd.ttf", 28)
+font_heading = load_font("arialbd.ttf", 36)
+font_small = load_font("arial.ttf", 20)
 
 st.set_page_config(page_title="Admit Card Generator", layout="centered")
 st.markdown("<h1 style='text-align: center;'>Admit Card Generator</h1>", unsafe_allow_html=True)
