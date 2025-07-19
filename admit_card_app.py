@@ -3,6 +3,8 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 from datetime import datetime
 
+font_regular = ImageFont.truetype("fonts/arial.ttf", 18)
+font_bold = ImageFont.truetype("fonts/arialbd.ttf", 22)
 # Title and Page Settings
 st.set_page_config(page_title="Admit Card Generator", layout="centered")
 
