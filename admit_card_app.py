@@ -120,6 +120,6 @@ if submitted:
         st.subheader("📎 Admit Card Preview")
         buf = io.BytesIO()
         card.save(buf, format="PNG")
-        st.image(buf.getvalue(), use_column_width=True)
+        st.image(buf.getvalue(), use_container_width=True)
         st.download_button("⬇️ Download Admit Card", data=buf.getvalue(),
                            file_name=f"AdmitCard_{name.replace(' ', '_')}.png", mime="image/png")
