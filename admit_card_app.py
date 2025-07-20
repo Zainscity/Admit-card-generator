@@ -1,56 +1,74 @@
 import os
-import streamlit as st
-from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
+import json
+import base64
+import requests
+from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+import streamlit as st
 
-# Load custom fonts
+# ---------- FONT SETUP ----------
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 def load_font(filename, size):
     path = os.path.join(FONT_DIR, filename)
-    if not os.path.exists(path):
-        st.error(f"Font file {filename} not found in fonts folder.")
+    if not os.path.isfile(path):
+        st.error(f"Font not found: {path}")
         st.stop()
     return ImageFont.truetype(path, size)
 
-# Font definitions
-font_heading = load_font("robotobold.ttf", 38)
-font_subheading = load_font("robotobold.ttf", 26)
-font_regular = load_font("roboto.ttf", 24)
-font_bold = load_font("robotobold.ttf", 24)
-font_note = load_font("roboto.ttf", 20)
-font_signature = load_font("roboto.ttf", 22)
+try:
+    font_heading = load_font("roboto.ttf", 34)
+    font_section = load_font("robotobold.ttf", 24)
+    font_regular = load_font("roboto.ttf", 22)
+    font_bold = load_font("robotobold.ttf", 22)
+    font_note = load_font("roboto.ttf", 20)
+    font_signature = load_font("roboto.ttf", 18)
+except Exception as e:
+    st.exception(e)
 
-# Streamlit UI
-st.set_page_config(page_title="Mominabad General Hospital", layout="centered")
-st.markdown("<h1 style='text-align:center;'>🎓 Generate your admit card</h1>", unsafe_allow_html=True)
+# ---------- STREAMLIT UI ----------
+st.set_page_config(page_title="Admit Card Generator", layout="wide")
+st.markdown("<h1 style='text-align: center;'>Admit Card Generator</h1>", unsafe_allow_html=True)
 st.markdown("---")
 
-# Input form
-with st.form("admit_form"):
-    st.subheader("📝 Candidate Information")
+with st.form("admit_form", clear_on_submit=False):
+    st.subheader("Enter Candidate Details")
     col1, col2 = st.columns(2)
 
     with col1:
-        name = st.text_input("Full Name")
+        name = st.text_input("Student Name")
         father_name = st.text_input("Father's Name")
-        programme = st.selectbox("Programme", ["BSN", "BTech", "MTech", "Other"])
-        cnic = st.text_input("CNIC / B-Form No", max_chars=15)
+        programme = st.selectbox("Programme", ["BSN", "Btech", "Mtech", "Other"])
+        cnic = st.text_input("CNIC / B.Form No", max_chars=15)
 
     with col2:
         admit_card_no = st.text_input("Admit Card No", max_chars=10)
-        phone = st.text_input("Phone Number", max_chars=15)
+        phone = st.text_input("Phone No.", max_chars=15)
 
-    uploaded_image = st.file_uploader("Upload Passport-Size Photo", type=["jpg", "jpeg", "png"])
+    uploaded_image = st.file_uploader("Upload Passport Size Photo", type=["jpg", "jpeg", "png"])
     submitted = st.form_submit_button("✨ Generate Admit Card")
 
-# Admit card logic
+# ---------- GOOGLE DRIVE UPLOAD ----------
+def upload_to_drive(img_bytes, metadata_dict, web_app_url):
+    base64_image = base64.b64encode(img_bytes).decode('utf-8')
+    payload = {
+        "image": base64_image,
+        "metadata": json.dumps(metadata_dict)
+    }
+    try:
+        response = requests.post(web_app_url, data=payload)
+        return response.text
+    except Exception as e:
+        return f"❌ Failed to upload: {e}"
+
+# ---------- ADMIT CARD GENERATION ----------
 if submitted:
     if not all([name, father_name, programme, cnic, admit_card_no, uploaded_image]):
-        st.error("Please fill in all required fields and upload a photo.")
+        st.error("Please fill all fields and upload a photo.")
     elif not admit_card_no.isdigit():
-        st.error("Admit Card No. must be numeric.")
+        st.error("Admit Card No must be numeric.")
     else:
-        width, height = 1200, 1100  # Reduced height
+        width, height = 1200, 1100
         card = Image.new("RGB", (width, height), "white")
         draw = ImageDraw.Draw(card)
 
@@ -60,12 +78,12 @@ if submitted:
         heading_bbox = draw.textbbox((0, 0), heading_text, font=font_heading)
         draw.text(((width - heading_bbox[2]) // 2, 22), heading_text, font=font_heading, fill="#1a237e")
 
-        # Passport Photo
+        # Photo
         user_img = Image.open(uploaded_image).resize((160, 200))
         user_img = ImageOps.expand(user_img, border=2, fill="#444")
         card.paste(user_img, (980, 105))
 
-        # Text
+        # Info positions
         x_label, x_value = 60, 280
         y, y_gap = 105, 40
 
@@ -87,27 +105,27 @@ if submitted:
         y += 20
         draw.line(((x_label, y), (width - 60, y)), fill="#ccc", width=1)
         y += 15
-        draw.text((x_label, y), "Test Centre", font=font_subheading, fill="black")
+        draw.text((x_label, y), "Test Centre", font=font_section, fill="black")
         y += 35
         draw.text((x_label + 20, y), "Mominabad General Hospital", font=font_bold, fill="black")
 
-        # Instructions
+        # Notes
         y += 55
         draw.line(((x_label, y), (width - 60, y)), fill="#ccc", width=1)
         y += 15
-        draw.text((x_label, y), "Instructions", font=font_subheading, fill="black")
+        draw.text((x_label, y), "Instructions", font=font_section, fill="black")
         y += 30
         notes = [
-            "Please arrive 30 minutes before the test starts.",
+            "Arrive 30 minutes before the test.",
             "Bring your Admit Card and original CNIC/B-Form.",
-            "Mobile phones or gadgets are strictly prohibited.",
-            "No entry will be allowed after the test starts.",
+            "Mobile phones and gadgets are not allowed.",
+            "No entry after the test starts."
         ]
         for note in notes:
             draw.text((x_label + 20, y), f"• {note}", font=font_note, fill="black")
             y += 30
 
-        # Signature
+        # Signature Line
         y += 30
         sig_x_start = width - 370
         sig_x_end = width - 80
@@ -115,11 +133,28 @@ if submitted:
         draw.line((sig_x_start, sig_y, sig_x_end, sig_y), fill="black", width=2)
         draw.text((sig_x_start, sig_y + 10), "Authorized Signature", font=font_signature, fill="black")
 
-        # Render
+        # Display card
         st.markdown("---")
         st.subheader("📎 Admit Card Preview")
         buf = io.BytesIO()
         card.save(buf, format="PNG")
         st.image(buf.getvalue(), use_container_width=True)
+
+        # Download button
         st.download_button("⬇️ Download Admit Card", data=buf.getvalue(),
                            file_name=f"AdmitCard_{name.replace(' ', '_')}.png", mime="image/png")
+
+        # Upload to Google Drive
+        metadata = {
+            "name": name,
+            "father_name": father_name,
+            "admit_card_no": admit_card_no,
+            "programme": programme,
+            "cnic": cnic,
+            "phone": phone,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        web_app_url = "https://script.google.com/macros/s/AKfycbxGzFULRg-UPvI3KpV-AX_OZVAw81MKdg3Hrb-B7Ni9dL6wTKWk9G9jJWl6YeHBg6zxNA/exec"  # Replace with your URL
+        result = upload_to_drive(buf.getvalue(), metadata, web_app_url)
+        st.success(result)
